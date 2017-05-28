@@ -12,7 +12,7 @@ using SQLibrary.ORM;
 
 namespace SQLibrary.MySQL {
 
-    public class MySQLConnection : Database {
+    public class MySQLConnection : Database { 
 
         public static readonly Logger _Logger = new Logger("MySQLConnection");
 
