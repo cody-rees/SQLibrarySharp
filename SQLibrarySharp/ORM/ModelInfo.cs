@@ -21,7 +21,7 @@ namespace SQLibrary.ORM {
             this.Table = _type.GetCustomAttribute<Table>();
 
             if (Table == null) {
-                throw new ModelFormatException(string.Format("Missing table attribute for Model {0}", mtype.ToString()));
+                throw new ModelFormatException(string.Format("Missing table attribute for Model {0}", MType.ToString()));
             }
 
             foreach (FieldInfo field in _type.GetFields()) {
@@ -67,7 +67,7 @@ namespace SQLibrary.ORM {
             Allows for multiple potential schemas and database types
         */
         public int Level = 1;
-        public string Schema;
+        public string SQL;
 
     }
 

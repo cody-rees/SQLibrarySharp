@@ -16,7 +16,7 @@ namespace SQLibrary.System.Logging {
 		public Exception LastThrownException;
 
         public Logger(String name) {
-            this.name = name;
+            this.Name = name;
         }
 
         public void Info(String message) {

@@ -3,6 +3,7 @@ using SQLibrary.System.Mapping;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,10 +11,10 @@ namespace SQLibrary.ORM {
 
     public abstract class Model {
 
-        private static HashSet<ModelInfo> info;
+        private static HashSet<ModelInfo> infoList;
         
         public static T Find<T>(int id) where T : Model {
-            List<T> models = Select<T>();
+            List<T> models = Where<T>(null);
             if (models.Count < 1) {
                 return null;
             }
@@ -22,8 +23,10 @@ namespace SQLibrary.ORM {
         }
 
 
-        public static List<T> Select<T>() where T : Model { //Condition condition
+        public static List<T> Where<T>(Expression<Func<T, bool>> cond) where T : Model { //Condition condition
+            //Example Expression x.id < 5 && x.id != 10
             
+
             return null;
         }
 
@@ -38,7 +41,7 @@ namespace SQLibrary.ORM {
 
 
         public static bool BuildSchema<T>() where T : Model {
-            return BuildSchema<T>(1, Database.primaryDB);
+            return BuildSchema<T>(1, Database.PrimaryDB);
         }
 
         public static bool BuildSchema<T>(int level, Database db) where T : Model {
@@ -49,7 +52,7 @@ namespace SQLibrary.ORM {
 
 
         public static List<T> raw<T>(string query) where T : Model {
-            return raw<T>(query, Database.primaryDB);
+            return raw<T>(query, Database.PrimaryDB);
         }
 
         public static List<T> raw<T>(string query, Database db) where T : Model {
@@ -74,7 +77,7 @@ namespace SQLibrary.ORM {
             ModelInfo info = GetInfo<T>();
             T model = NewInstance<T>();
             
-            foreach(ModelField field in info.fillables) {
+            foreach(ModelField field in info.Fillables) {
                 var value = result.Get(field.GetField());
                 field.GetInfo().SetValue(model, value);
             }
@@ -88,14 +91,14 @@ namespace SQLibrary.ORM {
         
 
         public static ModelInfo GetInfo<T>() where T : Model {
-            if (_info == null) {
-                _info = new HashSet<ModelInfo>();
+            if (infoList == null) {
+                infoList = new HashSet<ModelInfo>();
             }
 
-            ModelInfo info = _info.FirstOrDefault(f => f.mtype == typeof(T));
+            ModelInfo info = infoList.FirstOrDefault(f => f.MType == typeof(T));
             if (info == null) { 
                 info = new ModelInfo(typeof(T));
-                _info.Add(info);
+                infoList.Add(info);
             }
 
             return info;
