@@ -9,7 +9,7 @@ namespace SQLibrary.System.Logging {
 
     public class Logger {
 
-        private readonly String name;
+        private readonly String Name;
 
 		public Level LastThrownLevel;
 		public String LastThrownMessage;
@@ -52,7 +52,7 @@ namespace SQLibrary.System.Logging {
 			this.LastThrownLevel = level;
 			this.LastThrownException = e;
 
-            Console.WriteLine(name + " | " + level.ToString() + ": " + message);
+            Console.WriteLine(Name + " | " + level.ToString() + ": " + message);
             if (e == null) {
                 return;
             }

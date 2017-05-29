@@ -11,22 +11,22 @@ namespace SQLibrary.ORM {
 
     public class ModelInfo {
 
-        public Type mtype { get; }
-        public Table table { get; }
-        public List<ModelField> fillables { get; }
+        public Type MType { get; }
+        public Table Table { get; }
+        public List<ModelField> Fillables { get; }
 
-        public ModelInfo(Type type) {
-            this.mtype = type;
-            this.fillables = new List<ModelField>();
-            this.table = type.GetCustomAttribute<Table>();
+        public ModelInfo(Type _type) {
+            this.MType = _type;
+            this.Fillables = new List<ModelField>();
+            this.Table = _type.GetCustomAttribute<Table>();
 
-            if (table == null) {
+            if (Table == null) {
                 throw new ModelFormatException(string.Format("Missing table attribute for Model {0}", mtype.ToString()));
             }
 
-            foreach (FieldInfo field in type.GetFields()) {
+            foreach (FieldInfo field in _type.GetFields()) {
                 if (field.GetCustomAttribute(typeof(Fillable)) != null) {
-                    fillables.Add(new ModelField(field));
+                    Fillables.Add(new ModelField(field));
                 }
             }
 
@@ -47,18 +47,18 @@ namespace SQLibrary.ORM {
     }
 
     public class PrimaryKey : Attribute {
-        public String key = null;
+        public String Key = null;
 
     }
 
     public class ForeignKey : Attribute {
-        public String key = null;
-        public Model references;
+        public String Key = null;
+        public Model References;
 
     }
 
     public class Fillable : Attribute {
-        public String field;
+        public String Field;
 
     }
 
@@ -66,8 +66,8 @@ namespace SQLibrary.ORM {
         /**
             Allows for multiple potential schemas and database types
         */
-        public int level = 1;
-        public string schema;
+        public int Level = 1;
+        public string Schema;
 
     }
 
@@ -76,54 +76,54 @@ namespace SQLibrary.ORM {
 
     public class ModelField {
 
-        private PrimaryKey primaryKey;
-        private ForeignKey foreignKey;
-        private Fillable fillable;
+        private PrimaryKey PrimaryKey;
+        private ForeignKey ForeignKey;
+        private Fillable Fillable;
 
-        private FieldInfo fieldInfo;
-        private List<Schema> schemaList;
+        private FieldInfo FieldInfo;
+        private List<Schema> SchemaList;
 
         public ModelField(FieldInfo field) {
 
-            this.fillable = (Fillable) field.GetCustomAttribute(typeof(Fillable));
-            this.primaryKey = (PrimaryKey) field.GetCustomAttribute(typeof(PrimaryKey));
-            this.foreignKey = (ForeignKey) field.GetCustomAttribute(typeof(ForeignKey));
+            this.Fillable = (Fillable) field.GetCustomAttribute(typeof(Fillable));
+            this.PrimaryKey = (PrimaryKey) field.GetCustomAttribute(typeof(PrimaryKey));
+            this.ForeignKey = (ForeignKey) field.GetCustomAttribute(typeof(ForeignKey));
 
-            this.fieldInfo = field;
-            this.schemaList = new List<Schema>();
+            this.FieldInfo = field;
+            this.SchemaList = new List<Schema>();
             foreach (Attribute attr in field.GetCustomAttributes()) {
                 if (!typeof(Schema).IsInstanceOfType(attr)) {
                     continue;
                 }
 
-                schemaList.Add((Schema)attr);
+                SchemaList.Add((Schema)attr);
             }
         }
 
 
 
         public PrimaryKey GetPrimaryKey() {
-            return primaryKey;
+            return PrimaryKey;
         }
 
         public ForeignKey GetForeignKey() {
-            return foreignKey;
+            return ForeignKey;
         }
 
         public Fillable GetFillable() {
-            return fillable;
+            return Fillable;
         }
 
         public List<Schema> GetSchema() {
-            return schemaList;
+            return SchemaList;
         }
 
 
         //Gets Highest Schema to a Specified Level
         public Schema GetSchema(int level) {
             Schema schemaBuffer = null;
-            foreach (Schema schema in schemaList) {
-                if (schema.level > level) {
+            foreach (Schema schema in SchemaList) {
+                if (schema.Level > level) {
                     continue;
                 }
 
@@ -132,7 +132,7 @@ namespace SQLibrary.ORM {
                     continue;
                 }
 
-                if (schemaBuffer.level < schema.level) {
+                if (schemaBuffer.Level < schema.Level) {
                     schemaBuffer = schema;
                 }
             }
@@ -141,11 +141,11 @@ namespace SQLibrary.ORM {
         }
 
         public String GetField() {
-            return fillable.field;
+            return Fillable.Field;
         }
 
         public FieldInfo GetInfo() {
-            return fieldInfo;
+            return FieldInfo;
         }
         
     }

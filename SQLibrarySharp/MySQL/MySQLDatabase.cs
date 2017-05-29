@@ -14,27 +14,27 @@ namespace SQLibrary.MySQL {
 
     public class MySQLConnection : Database { 
 
-        public static readonly Logger _Logger = new Logger("MySQLConnection");
+        public static readonly Logger Logger = new Logger("MySQLConnection");
 
-        private MySqlConnection connection;
-        private readonly String connectionString;
+        private MySqlConnection Connection;
+        private readonly String ConnectionString;
 
 
         public MySQLConnection(String host, String user, String pass, String db) {
-            connectionString = "server={0};uid={1};pwd={2};database={3};";
-            connectionString = String.Format(connectionString, host, user, pass, db);
+            ConnectionString = "server={0};uid={1};pwd={2};database={3};";
+            ConnectionString = String.Format(ConnectionString, host, user, pass, db);
             
         }
 
         public override bool OpenConnection() {
             try {
-                connection = new MySqlConnection();
-                connection.ConnectionString = connectionString;
-                connection.Open();
+                Connection = new MySqlConnection();
+                Connection.ConnectionString = ConnectionString;
+                Connection.Open();
 
             }
             catch (MySqlException e) {
-                _Logger.Severe("Failed to Open Database Connection", e);
+                Logger.Severe("Failed to Open Database Connection", e);
                 return false;
             }
 
@@ -42,7 +42,7 @@ namespace SQLibrary.MySQL {
         }
 
         public override void CloseConnection() {
-            connection.Close();
+            Connection.Close();
         }
 
         public override ResultMap ExecuteQuery(string query) {
@@ -53,7 +53,7 @@ namespace SQLibrary.MySQL {
             MySqlCommand command = new MySqlCommand();
             command.CommandText = query;
             command.CommandType = CommandType.Text;
-            command.Connection = connection;
+            command.Connection = Connection;
 
             try {
                 MySqlDataReader reader = command.ExecuteReader();
@@ -87,7 +87,7 @@ namespace SQLibrary.MySQL {
                 return results[results.Count - 1];
             }
             catch (Exception e) {
-                _Logger.Warning("Failed to execute Query", this.exception = e);
+                Logger.Warning("Failed to execute Query", this.exception = e);
                 return null;
             }
         }
@@ -100,7 +100,7 @@ namespace SQLibrary.MySQL {
             MySqlCommand command = new MySqlCommand();
             command.CommandText = update;
             command.CommandType = CommandType.Text;
-            command.Connection = connection;
+            command.Connection = Connection;
 
             try {
                 command.ExecuteNonQuery();
@@ -108,7 +108,7 @@ namespace SQLibrary.MySQL {
 
             }
             catch (Exception e) {
-                _Logger.Warning("Failed to execute Query", this.exception = e);
+                Logger.Warning("Failed to execute Query", this.exception = e);
                 return false;
             }
         }

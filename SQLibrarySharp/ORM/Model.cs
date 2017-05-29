@@ -10,10 +10,8 @@ namespace SQLibrary.ORM {
 
     public abstract class Model {
 
-        private static HashSet<ModelInfo> _info;
-
-
-
+        private static HashSet<ModelInfo> info;
+        
         public static T Find<T>(int id) where T : Model {
             List<T> models = Select<T>();
             if (models.Count < 1) {

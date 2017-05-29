@@ -21,11 +21,11 @@ namespace SQLibrary.System {
         public abstract Boolean ExecuteUpdate(String update);
         
         
-        public static Database primaryDB { get; set; }
+        public static Database PrimaryDB { get; set; }
 
         public Database() {
-            if (primaryDB == null) {
-                primaryDB = this;
+            if (PrimaryDB == null) {
+                PrimaryDB = this;
             }
         }
 
