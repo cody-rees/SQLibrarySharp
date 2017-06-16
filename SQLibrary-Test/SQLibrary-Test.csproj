@@ -43,11 +43,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Expressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SQLibraryTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SQLibrarySharp\SQLibrarySharp.csproj">
+      <Project>{ab4e76e3-00dc-40de-9944-dc033d496fda}</Project>
+      <Name>SQLibrarySharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

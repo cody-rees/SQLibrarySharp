@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="ORM\Model.cs" />
     <Compile Include="ORM\ModelInfo.cs" />
+    <Compile Include="System\Condition.cs" />
     <Compile Include="System\Logging\Logging.cs" />
     <Compile Include="System\Mapping\ResultMap.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
