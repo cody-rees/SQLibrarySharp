@@ -6,11 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SQLibrary.ORM;
-using System.Linq.Expressions;
-using SQLibrary.System.Condition;
 
 namespace SQLibrary.MySQL {
 
@@ -47,18 +42,88 @@ namespace SQLibrary.MySQL {
             Connection.Close();
         }
 
-        public override ResultMap ExecuteQuery(string query) {
+        public override ResultMap ExecuteQuery(string query, Dictionary<string, object> parameters) {
             if (output != null) {
                 output.WriteLine(query);
             }
 
-            MySqlCommand command = new MySqlCommand();
-            command.CommandText = query;
+            MySqlCommand command = new MySqlCommand(query, Connection);
             command.CommandType = CommandType.Text;
-            command.Connection = Connection;
+
+            foreach (string key in parameters.Keys) {
+                command.Parameters.AddWithValue(key, parameters[key]);
+            }
 
             return MapCommandResult(command);
         }
+
+        public override bool ExecuteUpdate(string update, Dictionary<string, object> parameters) {
+            if (output != null) {
+                output.WriteLine(update);
+            }
+
+            MySqlCommand command = new MySqlCommand(update, Connection);
+            command.CommandType = CommandType.Text;
+
+            foreach (string key in parameters.Keys) {
+                command.Parameters.AddWithValue(key, parameters[key]);
+            }
+
+            try {
+                command.ExecuteNonQuery();
+                return true;
+
+            }
+            catch (Exception e) {
+                Logger.Warning("Failed to execute Query", this.exception = e);
+                return false;
+            }
+            
+        }
+
+
+        public override string BuildConditionSQL(List<Condition> conditions, ref Dictionary<string, object> parameters) {
+
+            String conditionStr = null;
+            foreach (Condition condition in conditions) {
+                if (condition is ParameterCondition) {
+
+                    string paramCondStr = FormatParameterCondition((ParameterCondition)condition, ref parameters);
+                    if (conditionStr == null) {
+                        conditionStr = paramCondStr;
+                        continue;
+                    }
+
+                    conditionStr += String.Format(" {0} {1}",
+                        condition.Relation.ToString(), paramCondStr);
+
+                } else if (condition is StaticCondition) {
+                    if (conditionStr == null) {
+                        conditionStr = ((StaticCondition)condition).SQL;
+                        continue;
+                    }
+
+                    conditionStr += String.Format(" {0} {1)",
+                        condition.Relation.ToString(), ((StaticCondition)condition).SQL);
+
+                } else if (condition is SubsetCondition) {
+                    if (conditionStr == null) {
+                        conditionStr = String.Format("(0)",
+                            BuildConditionSQL(((SubsetCondition)condition).Conditions, ref parameters));
+
+                        continue;
+                    }
+
+                    conditionStr += String.Format(" {0} ({1})", condition.Relation.ToString(),
+                        BuildConditionSQL(((SubsetCondition)condition).Conditions, ref parameters));
+                }
+
+            }
+
+            return conditionStr;
+        }
+
+
 
         public ResultMap MapCommandResult(MySqlCommand command) {
             try {
@@ -88,7 +153,7 @@ namespace SQLibrary.MySQL {
                         nextResult = reader.NextResult();
                         results.Add(map);
                     }
-                    
+
                     //Select Last in Query
                     return results[results.Count - 1];
                 }
@@ -98,112 +163,6 @@ namespace SQLibrary.MySQL {
             }
         }
 
-        public override bool ExecuteUpdate(string update) {
-            if (output != null) {
-                output.WriteLine(update);
-            }
-
-            MySqlCommand command = new MySqlCommand();
-            command.CommandText = update;
-            command.CommandType = CommandType.Text;
-            command.Connection = Connection;
-
-            try {
-                command.ExecuteNonQuery();
-                return true;
-
-            }
-            catch (Exception e) {
-                Logger.Warning("Failed to execute Query", this.exception = e);
-                return false;
-            }
-            
-        }
-
-
-        public override ResultMap ExecuteConditionalQuery(string query, SQLConditional conditional, ref Dictionary<string, object> parameters) {
-            string conditionalSQL = BuildConditionSQL(conditional.Conditions, ref parameters);
-
-            MySqlCommand command = new MySqlCommand(String.Format(query, conditionalSQL), Connection);
-            if (output != null) {
-                output.WriteLine(command.CommandText);
-            }
-
-            foreach (string key in parameters.Keys) {
-                command.Parameters.AddWithValue(key, parameters[key]);
-            } 
-            
-            command.Prepare();
-            return MapCommandResult(command);
-        }
-
-
-        public override Boolean ExecuteConditionalUpdate(string query, SQLConditional conditional, ref Dictionary<string, object> parameters) {
-            string conditionalSQL = BuildConditionSQL(conditional.Conditions, ref parameters);
-
-            MySqlCommand command = new MySqlCommand(String.Format(query, conditionalSQL), Connection);
-            if (output != null) {
-                output.WriteLine(command.CommandText);
-            }
-
-            foreach (string key in parameters.Keys) {
-                command.Parameters.AddWithValue(key, parameters[key]);
-            }
-
-            command.Prepare();
-
-            try {
-                command.ExecuteNonQuery();
-                return true;
-
-            } catch (Exception e) {
-                Logger.Warning("Failed to execute Query", this.exception = e);
-                return false;
-            }
-        }
-
-
-
-        private string BuildConditionSQL(List<Condition> conditions, ref Dictionary<string, object> parameters) {
-
-            String conditionStr = null;
-            foreach (Condition condition in conditions) {
-                if (condition is ParameterCondition) {
-
-                    string paramCondStr = FormatParameterCondition((ParameterCondition)condition, ref parameters);
-                    if (conditionStr == null) {
-                        conditionStr = paramCondStr;
-                        continue;
-                    }
-
-                    conditionStr += String.Format(" {0} {1}",
-                        condition.Relation.ToString(), paramCondStr);
-
-                } else if (condition is StaticCondition) {
-                    if (conditionStr == null) {
-                        conditionStr = ((StaticCondition) condition).SQL;
-                        continue;
-                    }
-
-                    conditionStr += String.Format(" {0} {1)",
-                        condition.Relation.ToString(), ((StaticCondition) condition).SQL);
-
-                } else if (condition is SubsetCondition) {
-                    if (conditionStr == null) {
-                        conditionStr = String.Format("(0)", 
-                            BuildConditionSQL(((SubsetCondition) condition).Conditions, ref parameters));
-
-                        continue;
-                    }
-
-                    conditionStr += String.Format(" {0} ({1})", condition.Relation.ToString(), 
-                        BuildConditionSQL(((SubsetCondition) condition).Conditions, ref parameters));
-                }
-                
-            }
-
-            return conditionStr;
-        }
 
         private string FormatParameterCondition(ParameterCondition paramCond, ref Dictionary<String, Object> parameters) {
 
@@ -212,13 +171,13 @@ namespace SQLibrary.MySQL {
 
             //Param1 Formatting Default FieldEscape
             switch (paramCond.Param1Formatting) {
-                case ParameterCondition.FORMAT_PARAMETER_VALUE:
+                case ParameterFormat.PREPARED_STATEMENT_ARGUMENT:
                     param1 = String.Format("@val{0}", (parameters.Count + 1) );
 
                     parameters.Add("@val" + (parameters.Count + 1), paramCond.Param1);
                     break;
 
-                case ParameterCondition.FORMAT_PARAMETER_RAW:
+                case ParameterFormat.RAW:
                     param1 = paramCond.Param1;
                     break;
 
@@ -230,11 +189,11 @@ namespace SQLibrary.MySQL {
 
             //Param2 Formatting Default Value Escape
             switch (paramCond.Param2Formatting) {
-                case ParameterCondition.FORMAT_PARAMETER_FIELD:
+                case ParameterFormat.ESCAPE_PARAMETER_AS_FIELD:
                     param2 = FieldEscape(paramCond.Param2);
                     break;
 
-                case ParameterCondition.FORMAT_PARAMETER_RAW:
+                case ParameterFormat.RAW:
                     param2 = paramCond.Param2;
                     break;
                     
@@ -247,6 +206,28 @@ namespace SQLibrary.MySQL {
 
             return String.Format("{0} {1} {2}", param1, paramCond.Operator, param2);
         }
+        
+        public static string EscapeValue(string value, int format, ref Dictionary<string, object> parameters) {
+
+            string param = null;
+            switch (format) {
+                case ParameterFormat.RAW:
+                    param = value;
+                    break;
+
+                case ParameterFormat.ESCAPE_PARAMETER_AS_FIELD:
+                    param = MySQLConnection.FieldEscape(value);
+                    break;
+
+                default:
+                    param = String.Format("@val{0}", (parameters.Count + 1));
+                    parameters.Add("@val" + (parameters.Count + 1), value);
+                    break;
+
+            }
+
+            return param;
+        }
 
         public override SQLSelect Select(string table) {
             return new MySQLSelect(table, this);
@@ -257,11 +238,11 @@ namespace SQLibrary.MySQL {
         }
 
         public override SQLDelete Delete(string table) {
-            return null;
+            return new MySQLDelete(table, this);
         }
 
         public override SQLInsert Insert(string table, params string[] fields) {
-            return null;
+            return new MySQLInsert(table, this, fields);
         }
 
         public static string FieldEscape(string field) {
@@ -291,8 +272,11 @@ namespace SQLibrary.MySQL {
                 fieldSQL = "*";
             }
 
-            string query = String.Format("SELECT {0} FROM {1} WHERE ", fieldSQL, Table) + "{0}";
-            return Database.ExecuteConditionalQuery(query, this);
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            string query = String.Format("SELECT {0} FROM {1} WHERE {2}", fieldSQL, Table,
+                Database.BuildConditionSQL(this, ref parameters));
+
+            return Database.ExecuteQuery(query, parameters);
         }
 
     }
@@ -308,37 +292,86 @@ namespace SQLibrary.MySQL {
 
             foreach (FieldUpdate field in base.FieldUpdates) {
                 string fieldEscaped = MySQLConnection.FieldEscape(field.Field);
-                string value = EscapeValue(field.Value, field.ValueFormat, ref parameters);
+                string value = MySQLConnection.EscapeValue(field.Value, field.ValueFormat, ref parameters);
                 setFields.Add(String.Format("{0}={1}", fieldEscaped, value));
             }
 
             string fieldSQL = String.Join(", ", setFields);
-            string query = String.Format("UPDATE {0} SET {1} WHERE ", base.Table, fieldSQL) + "{0}";
+            string query = String.Format("UPDATE {0} SET {1} WHERE {2}", base.Table, fieldSQL,
+                Database.BuildConditionSQL(this, ref parameters));
 
-            return Database.ExecuteConditionalUpdate(query, this, ref parameters);
-        }
-
-        public string EscapeValue(string value, int format, ref Dictionary<string, object> parameters) {
-            
-            string param = null;
-            switch (format) {
-                case ParameterCondition.FORMAT_PARAMETER_RAW:
-                    param = value;
-                    break;
-
-                default:
-                    param = String.Format("@val{0}", (parameters.Count + 1));
-                    parameters.Add("@val" + (parameters.Count + 1), value);
-                    break;
-
-            }
-
-            return param;
-
+            return Database.ExecuteUpdate(query, parameters);
         }
         
     }
 
+    public class MySQLDelete : SQLDelete {
+
+        public MySQLDelete(string table, MySQLConnection database) : base(table, database) { }
+
+        public override Boolean Execute() {
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            String query = String.Format("DELETE FROM {0} WHERE {1}", base.Table,
+                Database.BuildConditionSQL(this, ref parameters));
+
+            return Database.ExecuteUpdate(query, parameters);
+        }
+    }
+
+    public class MySQLInsert : SQLInsert {
+
+        public MySQLInsert(string table, MySQLConnection database) : base(table, database) { }
+        public MySQLInsert(string table, MySQLConnection database, params string[] fields) 
+            : base(table, database, fields) { }
+
+        public override Boolean Execute() {
+
+            List<string> sqlValueList = new List<string>();
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+            foreach (object[] valuesArr in base.ValuesList) {
+                if (base.Fields != null && base.Fields.Count() != valuesArr.Count()) {
+                    throw new ArgumentException("Provided ValueSet does not match the size of Field List");
+                }
+
+                List<string> values = new List<string>();
+                foreach (object value in valuesArr) {
+                    if (value is Array) {
+                        object[] valuePair = (object[]) value;
+                        values.Add(MySQLConnection.EscapeValue(
+                            valuePair[0].ToString(), (int) valuePair[1], ref parameters)
+                        );
+
+                        continue;
+                    }
+
+                    values.Add(MySQLConnection.EscapeValue(
+                        value.ToString(), ParameterFormat.PREPARED_STATEMENT_ARGUMENT, ref parameters)
+                    );
+                }
+
+                sqlValueList.Add(String.Format("({0})", String.Join(", ", values)));
+            }
+
+            String query;
+            if (base.Fields == null || base.Fields.Count() < 1) {
+                query = String.Format("INSERT INTO {0} VALUES {1}", base.Table,
+                    String.Join(",", sqlValueList));
+
+            } else {
+                List<string> fields = new List<String>();
+                foreach (String field in base.Fields) {
+                    fields.Add(MySQLConnection.FieldEscape(field));
+                }
+
+                query = String.Format("INSERT INTO {0} ({1}) VALUES {2}", base.Table, 
+                    String.Join(", ", fields), String.Join(", ", sqlValueList));
+
+            }
+            
+            return Database.ExecuteUpdate(query, parameters);
+        }
+    }
 
     
 

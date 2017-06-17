@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace SQLibrary.System.Condition  {
+namespace SQLibrary.System  {
 
 
     /**
@@ -231,27 +228,6 @@ namespace SQLibrary.System.Condition  {
 
     public class Condition {
 
-        /**
-            Default Formatting preference, Formats parameter 2 as prepared statement argument
-            int value = 1;
-        */
-
-        public const int FORMAT_PARAMETER_VALUE = 1;
-
-
-        /**
-            Formats parameter 2 as database field reference
-            int value = 2;
-        */
-        public const int FORMAT_PARAMETER_FIELD = 2;
-
-        /**
-            No conditional formatting, parameter 2 will be inserted directly into the prepared statement query without any formatting
-            int value 3
-
-        */
-        public const int FORMAT_PARAMETER_RAW = 3;
-
 
         public Relation Relation { get; set; } = Relation.AND;
 
@@ -325,15 +301,15 @@ namespace SQLibrary.System.Condition  {
 
         /**
             Specify Formatting Algorythm for Formatting Preference for Parameter
-            @default Condition.FORMAT_PARAMETER_FIELD
+            @default Condition.ESCAPE_PARAMETER_AS_FIELD
         */
-        public int Param1Formatting { get; set; } = Condition.FORMAT_PARAMETER_FIELD;
+        public int Param1Formatting { get; set; } = ParameterFormat.ESCAPE_PARAMETER_AS_FIELD;
 
         /**
             Specify Formatting Algorythm for Formatting Preference for Parameter
-            @default Condition.FORMAT_PARAMETER_VALUE
+            @default Condition.ESCAPE_PARAMETER_AS_VALUE
         */
-        public int Param2Formatting { get; set; } = Condition.FORMAT_PARAMETER_VALUE;
+        public int Param2Formatting { get; set; } = ParameterFormat.PREPARED_STATEMENT_ARGUMENT;
         
 
         public ParameterCondition(string param1, string opera, string param2) {

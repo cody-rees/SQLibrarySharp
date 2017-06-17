@@ -1,12 +1,7 @@
-﻿using SQLibrary.ORM;
-using SQLibrary.System.Condition;
-using SQLibrary.System.Mapping;
+﻿using SQLibrary.System.Mapping;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SQLibrary.System {
 
@@ -18,25 +13,21 @@ namespace SQLibrary.System {
         public abstract bool OpenConnection();
         public abstract void CloseConnection();
 
-        public abstract ResultMap ExecuteQuery(String query);
-        public abstract Boolean ExecuteUpdate(String update);
-
-        public ResultMap ExecuteConditionalQuery(string query, SQLConditional conditional) {
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-            return ExecuteConditionalQuery(query, conditional, ref parameters);
+        public ResultMap ExecuteQuery(String query) {
+            return ExecuteQuery(query, new Dictionary<string, object>());
         }
 
-        public Boolean ExecuteConditionalUpdate(string query, SQLConditional conditional) {
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-            return ExecuteConditionalUpdate(query, conditional, ref parameters);
+        public Boolean ExecuteUpdate(String query) {
+            return ExecuteUpdate(query, new Dictionary<string, object>());
         }
 
-        public abstract ResultMap ExecuteConditionalQuery(string query, SQLConditional conditional, ref Dictionary<string, object> parameters);
-        public abstract Boolean ExecuteConditionalUpdate(string query, SQLConditional conditional, ref Dictionary<string, object> parameters);
+        public string BuildConditionSQL(SQLConditional conditions, ref Dictionary<string, object> parameters) {
+            return BuildConditionSQL(conditions.Conditions, ref parameters);
+        }
 
-
-
-
+        public abstract ResultMap ExecuteQuery(String query, Dictionary<string, object> parameters);
+        public abstract Boolean ExecuteUpdate(String update, Dictionary<string, object> parameters);
+        public abstract string BuildConditionSQL(List<Condition> conditions, ref Dictionary<string, object> parameters); 
 
         public SQLSelect Select(string table, params string[] fields) {
             SQLSelect select = Select(table);
@@ -76,6 +67,33 @@ namespace SQLibrary.System {
 
     }
 
+    public class ParameterFormat {
+
+
+        /**
+            Default Formatting preference, Formats parameter 2 as prepared statement argument
+            int value = 1;
+        */
+
+        public const int PREPARED_STATEMENT_ARGUMENT = 1;
+
+
+        /**
+            Formats parameter 2 as database field reference
+            int value = 2;
+        */
+        public const int ESCAPE_PARAMETER_AS_FIELD = 2;
+
+        /**
+            No conditional formatting, parameter 2 will be inserted directly into the prepared statement query without any formatting
+            int value 3
+
+        */
+        public const int RAW = 3;
+
+
+    }
+
     public abstract class SQLSelect : SQLConditional {
 
         public string Table;
@@ -94,9 +112,6 @@ namespace SQLibrary.System {
     }
 
     public abstract class SQLUpdate : SQLConditional {
-
-        public const int FORMAT_ESCAPE_VALUE = 0;
-        public const int FORMAT_RAW = 1;
 
         public string Table { get; set; }
         public Database Database { get; set; }
@@ -126,7 +141,7 @@ namespace SQLibrary.System {
             public int ValueFormat { get; }
 
             public FieldUpdate(string field, object value) :
-                this(field, value.ToString(), SQLUpdate.FORMAT_ESCAPE_VALUE) { }
+                this(field, value.ToString(), ParameterFormat.PREPARED_STATEMENT_ARGUMENT) { }
 
 
             public FieldUpdate(string field, object value, int formatting) {
@@ -169,9 +184,10 @@ namespace SQLibrary.System {
             this.Table = table;
             this.Database = database;
             this.Fields = fields;
+            this.ValuesList = new List<Object[]>();
         }
 
-        public SQLInsert Values(params string[] values) {
+        public SQLInsert Values(params object[] values) {
             this.ValuesList.Add(values);
             return this;
         }
