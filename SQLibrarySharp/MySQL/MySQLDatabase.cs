@@ -121,8 +121,7 @@ namespace SQLibrary.MySQL {
         }
 
 
-        public override ResultMap ExecuteConditionalQuery(string query, SQLConditional conditional) {
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+        public override ResultMap ExecuteConditionalQuery(string query, SQLConditional conditional, ref Dictionary<string, object> parameters) {
             string conditionalSQL = BuildConditionSQL(conditional.Conditions, ref parameters);
 
             MySqlCommand command = new MySqlCommand(String.Format(query, conditionalSQL), Connection);
@@ -139,13 +138,16 @@ namespace SQLibrary.MySQL {
         }
 
 
-        public override Boolean ExecuteConditionalUpdate(string query, SQLConditional conditional) {
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+        public override Boolean ExecuteConditionalUpdate(string query, SQLConditional conditional, ref Dictionary<string, object> parameters) {
             string conditionalSQL = BuildConditionSQL(conditional.Conditions, ref parameters);
 
             MySqlCommand command = new MySqlCommand(String.Format(query, conditionalSQL), Connection);
             if (output != null) {
                 output.WriteLine(command.CommandText);
+            }
+
+            foreach (string key in parameters.Keys) {
+                command.Parameters.AddWithValue(key, parameters[key]);
             }
 
             command.Prepare();
@@ -250,6 +252,17 @@ namespace SQLibrary.MySQL {
             return new MySQLSelect(table, this);
         }
 
+        public override SQLUpdate Update(string table) {
+            return new MySQLUpdate(table, this);
+        }
+
+        public override SQLDelete Delete(string table) {
+            return null;
+        }
+
+        public override SQLInsert Insert(string table, params string[] fields) {
+            return null;
+        }
 
         public static string FieldEscape(string field) {
             return String.Format("`{0}`", field.Replace(".", "`.`"));
@@ -283,5 +296,50 @@ namespace SQLibrary.MySQL {
         }
 
     }
+
+    public class MySQLUpdate : SQLUpdate {
+
+        public MySQLUpdate(string table, MySQLConnection database) : base(table, database) { }
+
+        public override bool Execute() {
+
+            List<string> setFields = new List<string>();
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+            foreach (FieldUpdate field in base.FieldUpdates) {
+                string fieldEscaped = MySQLConnection.FieldEscape(field.Field);
+                string value = EscapeValue(field.Value, field.ValueFormat, ref parameters);
+                setFields.Add(String.Format("{0}={1}", fieldEscaped, value));
+            }
+
+            string fieldSQL = String.Join(", ", setFields);
+            string query = String.Format("UPDATE {0} SET {1} WHERE ", base.Table, fieldSQL) + "{0}";
+
+            return Database.ExecuteConditionalUpdate(query, this, ref parameters);
+        }
+
+        public string EscapeValue(string value, int format, ref Dictionary<string, object> parameters) {
+            
+            string param = null;
+            switch (format) {
+                case ParameterCondition.FORMAT_PARAMETER_RAW:
+                    param = value;
+                    break;
+
+                default:
+                    param = String.Format("@val{0}", (parameters.Count + 1));
+                    parameters.Add("@val" + (parameters.Count + 1), value);
+                    break;
+
+            }
+
+            return param;
+
+        }
+        
+    }
+
+
+    
 
 }
