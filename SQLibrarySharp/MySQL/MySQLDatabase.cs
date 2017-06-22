@@ -257,7 +257,7 @@ namespace SQLibrary.MySQL {
         public override ResultMap Execute() {
             //Build FieldSQL for parameters
             string fieldSQL = FieldSQL;
-            if (fieldSQL == null && Fields != null) {
+            if (fieldSQL == null && Fields != null && Fields.Count() > 0) {
                 foreach (string field in Fields) {
                     if (fieldSQL == null) {
                         FieldSQL = MySQLConnection.FieldEscape(field);
@@ -272,9 +272,14 @@ namespace SQLibrary.MySQL {
                 fieldSQL = "*";
             }
 
+            if (base.Conditions.Count() < 1) {
+                Console.WriteLine(String.Format("SELECT {0} FROM {1}", fieldSQL, Table));
+                return Database.ExecuteQuery(String.Format("SELECT {0} FROM {1}", fieldSQL, Table));
+            }
+
             Dictionary<string, object> parameters = new Dictionary<string, object>();
             string query = String.Format("SELECT {0} FROM {1} WHERE {2}", fieldSQL, Table,
-                Database.BuildConditionSQL(this, ref parameters));
+                Database.BuildConditionSQL(base.Conditions, ref parameters));
 
             return Database.ExecuteQuery(query, parameters);
         }
@@ -297,8 +302,12 @@ namespace SQLibrary.MySQL {
             }
 
             string fieldSQL = String.Join(", ", setFields);
+            if (base.Conditions.Count() < 1) {
+                return Database.ExecuteUpdate(String.Format("UPDATE {0} SET {1}", fieldSQL, Table));
+            }
+
             string query = String.Format("UPDATE {0} SET {1} WHERE {2}", base.Table, fieldSQL,
-                Database.BuildConditionSQL(this, ref parameters));
+                Database.BuildConditionSQL(base.Conditions, ref parameters));
 
             return Database.ExecuteUpdate(query, parameters);
         }
@@ -310,9 +319,13 @@ namespace SQLibrary.MySQL {
         public MySQLDelete(string table, MySQLConnection database) : base(table, database) { }
 
         public override Boolean Execute() {
+            if (base.Conditions.Count() < 1) {
+                return Database.ExecuteUpdate(String.Format("DELETE FROM {0}", Table));
+            }
+
             Dictionary<string, object> parameters = new Dictionary<string, object>();
             String query = String.Format("DELETE FROM {0} WHERE {1}", base.Table,
-                Database.BuildConditionSQL(this, ref parameters));
+                Database.BuildConditionSQL(base.Conditions, ref parameters));
 
             return Database.ExecuteUpdate(query, parameters);
         }
@@ -342,6 +355,11 @@ namespace SQLibrary.MySQL {
                             valuePair[0].ToString(), (int) valuePair[1], ref parameters)
                         );
 
+                        continue;
+                    }
+
+                    if (value == null) {
+                        values.Add("NULL");
                         continue;
                     }
 

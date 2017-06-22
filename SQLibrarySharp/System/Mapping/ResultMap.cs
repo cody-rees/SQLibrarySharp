@@ -56,9 +56,7 @@ namespace SQLibrary.System.Mapping
 			public Object Get(int i) {
 				return Values[i];
 			}
-
-			
-
+        
 			public Type GetType(String name) {
 				return GetType(IndexOf(name));
 			}

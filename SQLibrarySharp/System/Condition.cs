@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SQLibrary.System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SQLibrary.System  {
@@ -9,7 +10,11 @@ namespace SQLibrary.System  {
             Also used to build SubsetConditions example "field = value OR (SQLConditional)"
 
     */
-    public class SQLConditional {
+    public class ConditionBuilder : SQLConditional<ConditionBuilder> {
+
+    }
+
+    public class SQLConditional<T> where T : SQLConditional<T> {
 
         public List<Condition> Conditions { get; }
 
@@ -26,28 +31,28 @@ namespace SQLibrary.System  {
                 is liable to SQL Injection and will NOT be automatically validated
             
         */
-        public SQLConditional Where(string sql) {
+        public T Where(string sql) {
             Conditions.Add(Condition.Where(sql));
-            return this;
+            return (T) this;
         }
-
+        
 
         /**
             Creates a SQL Parameter based (AND) equal(=) Condition
 
         */
-        public SQLConditional Where(object param1, object param2) {
+        public T Where(object param1, object param2) {
             Conditions.Add(Condition.Where(param1, param2));
-            return this;
+            return (T) this;
         }
 
         /**
             Creates a SQL Parameter based (AND) condition with specified operator
 
         */
-        public SQLConditional Where(object param1, string opera, object param2) {
+        public T Where(object param1, string opera, object param2) {
             Conditions.Add(Condition.Where(param1, opera, param2));
-            return this;
+            return (T) this;
         }
 
 
@@ -62,18 +67,18 @@ namespace SQLibrary.System  {
                     Condition.FORMAT_PARAMETER_VALUE
                 ];
         */
-        public SQLConditional Where(string param1, string opera, string param2, int[] formatting) {
+        public T Where(string param1, string opera, string param2, int[] formatting) {
             Conditions.Add(Condition.Where(param1, opera, param2, formatting));
-            return this;
+            return (T) this;
         }
 
         /**
             Add a SQL (AND) Condition to the current conditions queue
 
         */
-        public SQLConditional Where(Condition condition) {
+        public T Where(Condition condition) {
             Conditions.Add(condition);
-            return this;
+            return (T) this;
         }
 
 
@@ -86,9 +91,9 @@ namespace SQLibrary.System  {
                 
             );
         */
-        public SQLConditional Where(SQLConditional conditions) {
+        public T Where(ConditionBuilder conditions) {
             Where(conditions.Conditions.ToArray<Condition>());
-            return this;
+            return (T) this;
         }
 
 
@@ -101,9 +106,9 @@ namespace SQLibrary.System  {
                 
             );
         */
-        public SQLConditional Where(Condition[] conditions) {
+        public T Where(Condition[] conditions) {
             Conditions.Add(Condition.Where(conditions));
-            return this;
+            return (T) this;
         }
    
 
@@ -124,12 +129,12 @@ namespace SQLibrary.System  {
                 is liable to SQL Injection and will NOT be automatically validated
             
         */
-        public SQLConditional OrWhere(string sql) {
+        public T OrWhere(string sql) {
             Condition condition = Condition.Where(sql);
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
 
-            return this;
+            return (T) this;
         }
 
 
@@ -137,24 +142,24 @@ namespace SQLibrary.System  {
             Creates a SQL Parameter based (OR) equal(=) Condition
 
         */
-        public SQLConditional OrWhere(object param1, object param2) {
+        public T OrWhere(object param1, object param2) {
             Condition condition = Condition.Where(param1, param2);
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
 
-            return this;
+            return (T) this;
         }
 
         /**
             Creates a SQL Parameter based (OR) condition with specified operator
 
         */
-        public SQLConditional OrWhere(object param1, string opera, object param2) {
+        public T OrWhere(object param1, string opera, object param2) {
             Condition condition = Condition.Where(param1, opera, param2);
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
 
-            return this;
+            return (T) this;
         }
 
 
@@ -170,22 +175,22 @@ namespace SQLibrary.System  {
                 ];
 
         */
-        public SQLConditional OrWhere(string param1, string opera, string param2, int[] formatting) {
+        public T OrWhere(string param1, string opera, string param2, int[] formatting) {
             Condition condition = Condition.Where(param1, opera, param2, formatting);
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
 
-            return this;
+            return (T) this;
         }
 
         /**
             Add a SQL (OR) Condition to the current conditions queue
             
         */
-        public SQLConditional OrWhere(Condition condition) {
+        public T OrWhere(Condition condition) {
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
-            return this;
+            return (T) this;
         }
 
 
@@ -198,9 +203,9 @@ namespace SQLibrary.System  {
                  
             );
         */
-        public SQLConditional OrWhere(SQLConditional conditions) {
+        public T OrWhere(ConditionBuilder conditions) {
             Where(conditions.Conditions.ToArray<Condition>());
-            return this;
+            return (T) this;
         }
 
 
@@ -213,12 +218,12 @@ namespace SQLibrary.System  {
                  
             );
         */
-        public SQLConditional OrWhere(Condition[] conditions) {
+        public T OrWhere(Condition[] conditions) {
             Condition condition = Condition.Where(conditions);
             condition.Relation = Relation.OR;
             Conditions.Add(condition);
 
-            return this;
+            return (T) this;
         }
 
 

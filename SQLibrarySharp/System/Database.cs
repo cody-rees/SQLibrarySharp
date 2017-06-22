@@ -21,7 +21,7 @@ namespace SQLibrary.System {
             return ExecuteUpdate(query, new Dictionary<string, object>());
         }
 
-        public string BuildConditionSQL(SQLConditional conditions, ref Dictionary<string, object> parameters) {
+        public string BuildConditionSQL(ConditionBuilder conditions, ref Dictionary<string, object> parameters) {
             return BuildConditionSQL(conditions.Conditions, ref parameters);
         }
 
@@ -94,7 +94,7 @@ namespace SQLibrary.System {
 
     }
 
-    public abstract class SQLSelect : SQLConditional {
+    public abstract class SQLSelect : SQLConditional<SQLSelect> {
 
         public string Table;
         public Database Database { get; set; }
@@ -111,7 +111,7 @@ namespace SQLibrary.System {
         
     }
 
-    public abstract class SQLUpdate : SQLConditional {
+    public abstract class SQLUpdate : SQLConditional<SQLUpdate> {
 
         public string Table { get; set; }
         public Database Database { get; set; }
@@ -156,7 +156,7 @@ namespace SQLibrary.System {
 
     }
 
-    public abstract class SQLDelete : SQLConditional {
+    public abstract class SQLDelete : SQLConditional<SQLDelete> {
 
         public string Table { get; set; }
         public Database Database { get; set; }

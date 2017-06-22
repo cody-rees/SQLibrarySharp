@@ -13,6 +13,8 @@ namespace SQLibrary.ORM {
 
         public Type MType { get; }
         public Table Table { get; }
+
+        public ModelField PrimaryField { get; }
         public List<ModelField> Fillables { get; }
 
         public ModelInfo(Type _type) {
@@ -25,20 +27,27 @@ namespace SQLibrary.ORM {
             }
 
             foreach (FieldInfo field in _type.GetFields()) {
+
                 if (field.GetCustomAttribute(typeof(Fillable)) != null) {
-                    Fillables.Add(new ModelField(field));
+                    ModelField modelField = new ModelField(field);
+                    if (PrimaryField == null && modelField.GetPrimaryKey() != null) {
+                        this.PrimaryField = modelField;
+                    }
+
+                    Fillables.Add(modelField);
                 }
             }
 
 
         }
 
-        [Serializable]
-        private class ModelFormatException : Exception {
-            
-            public ModelFormatException(string message) : base(message) {}
-            
-        }
+    }
+
+    [Serializable]
+    public class ModelFormatException : Exception {
+
+        public ModelFormatException(string message) : base(message) { }
+
     }
 
     public class Table : Attribute {
@@ -82,15 +91,18 @@ namespace SQLibrary.ORM {
 
         private FieldInfo FieldInfo;
         private List<Schema> SchemaList;
+        public Type FieldType { get; }
 
         public ModelField(FieldInfo field) {
 
             this.Fillable = (Fillable) field.GetCustomAttribute(typeof(Fillable));
             this.PrimaryKey = (PrimaryKey) field.GetCustomAttribute(typeof(PrimaryKey));
             this.ForeignKey = (ForeignKey) field.GetCustomAttribute(typeof(ForeignKey));
-
+            
             this.FieldInfo = field;
             this.SchemaList = new List<Schema>();
+            this.FieldType = field.FieldType;
+
             foreach (Attribute attr in field.GetCustomAttributes()) {
                 if (!typeof(Schema).IsInstanceOfType(attr)) {
                     continue;
@@ -99,7 +111,7 @@ namespace SQLibrary.ORM {
                 SchemaList.Add((Schema)attr);
             }
         }
-
+        
 
 
         public PrimaryKey GetPrimaryKey() {
@@ -116,6 +128,24 @@ namespace SQLibrary.ORM {
 
         public List<Schema> GetSchema() {
             return SchemaList;
+        }
+
+
+
+        public void SetValue(Model instance, object value) {
+            //If type is nullable
+            Type nullableType = Nullable.GetUnderlyingType(FieldInfo.FieldType);
+            if (nullableType != null) {
+                //Convert to UnderlyingType
+                this.FieldInfo.SetValue(instance, Convert.ChangeType(value, nullableType));
+                return;
+            }
+
+            this.FieldInfo.SetValue(instance, Convert.ChangeType(value, FieldInfo.FieldType));
+        }
+
+        public object GetValue(Model instance) {
+            return FieldInfo.GetValue(instance);
         }
 
 
