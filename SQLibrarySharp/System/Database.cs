@@ -106,8 +106,12 @@ namespace SQLibrary.System {
             this.Table = table;
             this.Database = database;
         }
+
+        public ResultMap Execute() {
+            return Execute(new Dictionary<string, object>());
+        }
         
-        public abstract ResultMap Execute();
+        public abstract ResultMap Execute(Dictionary<string, object> parameters);
         
     }
 
@@ -151,8 +155,13 @@ namespace SQLibrary.System {
             }
 
         }
-        
-        public abstract bool Execute();
+
+        public bool Execute() {
+            return Execute(new Dictionary<string, object>());
+        }
+
+
+        public abstract bool Execute(Dictionary<string, object> parameters);
 
     }
 
@@ -166,7 +175,11 @@ namespace SQLibrary.System {
             this.Database = database;
         }
 
-        public abstract bool Execute();
+        public bool Execute() {
+            return Execute(new Dictionary<string, object>());
+        }
+
+        public abstract bool Execute(Dictionary<string, object> parameters);
 
     }
 
@@ -192,8 +205,11 @@ namespace SQLibrary.System {
             return this;
         }
 
-        public abstract bool Execute();
-        
+        public bool Execute() {
+            return Execute(new Dictionary<string, object>());
+        }
+
+        public abstract bool Execute(Dictionary<string, object> parameters);
     }
     
 

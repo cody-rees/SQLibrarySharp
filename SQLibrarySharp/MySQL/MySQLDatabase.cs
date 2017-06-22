@@ -254,7 +254,7 @@ namespace SQLibrary.MySQL {
 
         public MySQLSelect(string table, MySQLConnection database) : base(table, database) { }
         
-        public override ResultMap Execute() {
+        public override ResultMap Execute(Dictionary<string, object> parameters) {
             //Build FieldSQL for parameters
             string fieldSQL = FieldSQL;
             if (fieldSQL == null && Fields != null && Fields.Count() > 0) {
@@ -276,8 +276,7 @@ namespace SQLibrary.MySQL {
                 Console.WriteLine(String.Format("SELECT {0} FROM {1}", fieldSQL, Table));
                 return Database.ExecuteQuery(String.Format("SELECT {0} FROM {1}", fieldSQL, Table));
             }
-
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            
             string query = String.Format("SELECT {0} FROM {1} WHERE {2}", fieldSQL, Table,
                 Database.BuildConditionSQL(base.Conditions, ref parameters));
 
@@ -290,11 +289,9 @@ namespace SQLibrary.MySQL {
 
         public MySQLUpdate(string table, MySQLConnection database) : base(table, database) { }
 
-        public override bool Execute() {
+        public override bool Execute(Dictionary<string, object> parameters) {
 
             List<string> setFields = new List<string>();
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-
             foreach (FieldUpdate field in base.FieldUpdates) {
                 string fieldEscaped = MySQLConnection.FieldEscape(field.Field);
                 string value = MySQLConnection.EscapeValue(field.Value, field.ValueFormat, ref parameters);
@@ -318,12 +315,11 @@ namespace SQLibrary.MySQL {
 
         public MySQLDelete(string table, MySQLConnection database) : base(table, database) { }
 
-        public override Boolean Execute() {
+        public override Boolean Execute(Dictionary<string, object> parameters) {
             if (base.Conditions.Count() < 1) {
                 return Database.ExecuteUpdate(String.Format("DELETE FROM {0}", Table));
             }
-
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            
             String query = String.Format("DELETE FROM {0} WHERE {1}", base.Table,
                 Database.BuildConditionSQL(base.Conditions, ref parameters));
 
@@ -337,11 +333,9 @@ namespace SQLibrary.MySQL {
         public MySQLInsert(string table, MySQLConnection database, params string[] fields) 
             : base(table, database, fields) { }
 
-        public override Boolean Execute() {
+        public override Boolean Execute(Dictionary<string, object> parameters) {
 
             List<string> sqlValueList = new List<string>();
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-
             foreach (object[] valuesArr in base.ValuesList) {
                 if (base.Fields != null && base.Fields.Count() != valuesArr.Count()) {
                     throw new ArgumentException("Provided ValueSet does not match the size of Field List");

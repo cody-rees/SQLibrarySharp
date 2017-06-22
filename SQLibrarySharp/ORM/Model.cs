@@ -173,6 +173,8 @@ namespace SQLibrary.ORM {
     //Wrapper Class for Initializing Models from SQLSelect
     public class ModelSelect<T> : SQLConditional<ModelSelect<T>> where T : Model {
 
+        public Dictionary<string, object> parameters = new Dictionary<string, object>();
+
         private SQLSelect selectInstance;
         private ModelInfo info;
 
@@ -183,7 +185,7 @@ namespace SQLibrary.ORM {
         
         public List<T> Get() {
             selectInstance.Conditions.AddRange(base.Conditions);
-            ResultMap results = selectInstance.Execute();
+            ResultMap results = selectInstance.Execute(parameters);
             if (results == null) {
                 return null;
             }
